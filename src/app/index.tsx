@@ -13,17 +13,17 @@ import {
 } from 'react-native';
 import * as THREE from 'three';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 type Phase = 'home' | 'journey';
+
+const JOURNEY_DURATION = 30000;
 
 const narrationSource = require('../../assets/audio/vyora-intro.mp3');
 const musicSource = require('../../assets/audio/cinematic-space-atmosphere.mp3');
 
-const JOURNEY_DURATION = 30000;;
-
 function Stars() {
-  const stars = useRef<THREE.Points>(null);
+  const starsRef = useRef<THREE.Points>(null);
 
   const positions = useMemo(() => {
     const data = new Float32Array(1800 * 3);
@@ -47,20 +47,18 @@ function Stars() {
   }, []);
 
   useFrame((_, delta) => {
-    if (stars.current) {
-      stars.current.rotation.y += delta * 0.004;
-      stars.current.rotation.x += delta * 0.0005;
+    if (starsRef.current) {
+      starsRef.current.rotation.y += delta * 0.004;
+      starsRef.current.rotation.x += delta * 0.0005;
     }
   });
 
   return (
-    <points ref={stars}>
+    <points ref={starsRef}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={positions.length / 3}
-          array={positions}
-          itemSize={3}
+          args={[positions, 3]}
         />
       </bufferGeometry>
 
@@ -75,59 +73,37 @@ function Stars() {
   );
 }
 
-function CinematicCamera({
-  journeyStarted,
+function SpaceCamera({
+  moving,
 }: {
-  journeyStarted: boolean;
+  moving: boolean;
 }) {
   const { camera } = useThree();
-
-  const journeyProgress = useRef(0);
+  const progress = useRef(0);
 
   useFrame((_, delta) => {
-    const target = journeyStarted ? 1 : 0;
+    const target = moving ? 1 : 0;
 
-    /*
-     * Slow, time-based movement.
-     *
-     * The old version used damp(), which reached the
-     * destination much too quickly.
-     */
-    const speed = journeyStarted ? 0.055 : 0.8;
-
-    journeyProgress.current = THREE.MathUtils.damp(
-      journeyProgress.current,
+    progress.current = THREE.MathUtils.damp(
+      progress.current,
       target,
-      speed,
+      moving ? 0.055 : 0.8,
       delta
     );
 
-    const p = THREE.MathUtils.smoothstep(
-      journeyProgress.current,
+    const value = THREE.MathUtils.smoothstep(
+      progress.current,
       0,
       1
     );
 
-    /*
-     * Dramatic zoom-out:
-     *
-     * Start: 6.5
-     * End:   25
-     */
-    camera.position.z = 6.5 + p * 18.5;
+    camera.position.z = 6.5 + value * 18.5;
+    camera.position.y = value * 1.5;
 
-    /*
-     * Slight vertical movement makes the camera
-     * feel like it is actually travelling through space.
-     */
-    camera.position.y = p * 1.5;
-
-    /*
-     * Wider field of view as we leave Earth.
-     */
-    camera.fov = 50 + p * 15;
-
-    camera.updateProjectionMatrix();
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = 50 + value * 15;
+      camera.updateProjectionMatrix();
+    }
 
     camera.lookAt(0, -0.15, 0);
   });
@@ -136,13 +112,13 @@ function CinematicCamera({
 }
 
 function Earth({
-  journeyStarted,
+  moving,
 }: {
-  journeyStarted: boolean;
+  moving: boolean;
 }) {
-  const earth = useRef<THREE.Mesh>(null);
-  const clouds = useRef<THREE.Mesh>(null);
-  const group = useRef<THREE.Group>(null);
+  const earthRef = useRef<THREE.Mesh>(null);
+  const cloudsRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   const texture = useLoader(
     THREE.TextureLoader,
@@ -156,28 +132,26 @@ function Earth({
   }, [texture]);
 
   useFrame((_, delta) => {
-    if (earth.current) {
-      earth.current.rotation.y += delta * 0.18;
+    if (earthRef.current) {
+      earthRef.current.rotation.y += delta * 0.18;
     }
 
-    if (clouds.current) {
-      clouds.current.rotation.y += delta * 0.21;
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y += delta * 0.21;
     }
 
-    if (group.current && journeyStarted) {
-      group.current.rotation.z += delta * 0.01;
+    if (groupRef.current && moving) {
+      groupRef.current.rotation.z += delta * 0.01;
     }
   });
 
   return (
     <group
-      ref={group}
+      ref={groupRef}
       position={[0, -0.35, 0]}
     >
-      {/* ATMOSPHERE */}
       <mesh scale={0.42}>
         <sphereGeometry args={[1.7, 64, 64]} />
-
         <meshBasicMaterial
           color="#4da6ff"
           transparent
@@ -186,25 +160,19 @@ function Earth({
         />
       </mesh>
 
-      {/* EARTH */}
       <mesh
-        ref={earth}
+        ref={earthRef}
         scale={0.38}
       >
         <sphereGeometry args={[1.7, 64, 64]} />
-
-        <meshBasicMaterial
-          map={texture}
-        />
+        <meshBasicMaterial map={texture} />
       </mesh>
 
-      {/* CLOUD LAYER */}
       <mesh
-        ref={clouds}
+        ref={cloudsRef}
         scale={0.383}
       >
         <sphereGeometry args={[1.7, 64, 64]} />
-
         <meshBasicMaterial
           color="#ffffff"
           transparent
@@ -212,7 +180,6 @@ function Earth({
         />
       </mesh>
 
-      {/* ATMOSPHERIC RIM */}
       <mesh
         rotation={[Math.PI / 2, 0, 0]}
         scale={0.385}
@@ -220,7 +187,6 @@ function Earth({
         <torusGeometry
           args={[1.7, 0.025, 16, 100]}
         />
-
         <meshBasicMaterial
           color="#65b8ff"
           transparent
@@ -253,7 +219,7 @@ export default function HomeScreen() {
   const scanLine =
     useRef(new Animated.Value(0)).current;
 
-  const journeyTimer =
+  const timer =
     useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -262,22 +228,15 @@ export default function HomeScreen() {
     }).catch(() => {});
 
     return () => {
-      if (journeyTimer.current) {
-        clearTimeout(journeyTimer.current);
+      if (timer.current) {
+        clearTimeout(timer.current);
       }
 
-      try {
-        narrationPlayer.pause();
-        musicPlayer.pause();
-      } catch {
-        // Audio cleanup can fail on some platforms.
-      }
+      narrationPlayer.pause();
+      musicPlayer.pause();
     };
-  }, [musicPlayer, narrationPlayer]);
+  }, [narrationPlayer, musicPlayer]);
 
-  /*
-   * Moving scan line during the cinematic sequence.
-   */
   useEffect(() => {
     const animation = Animated.loop(
       Animated.timing(scanLine, {
@@ -299,37 +258,22 @@ export default function HomeScreen() {
   }, [phase, scanLine]);
 
   function beginExploration() {
-    if (journeyStarted) return;
+    if (journeyStarted) {
+      return;
+    }
 
     setJourneyStarted(true);
     setPhase('journey');
 
-    /*
-     * MUSIC
-     */
-    try {
-      musicPlayer.loop = true;
-      musicPlayer.volume = 0.42;
-      musicPlayer.seekTo(0);
-      musicPlayer.play();
-    } catch {
-      // Continue even if audio isn't available.
-    }
+    musicPlayer.loop = true;
+    musicPlayer.volume = 0.42;
+    musicPlayer.seekTo(0);
+    musicPlayer.play();
 
-    /*
-     * FULL 20-SECOND NARRATION
-     */
-    try {
-      narrationPlayer.volume = 1;
-      narrationPlayer.seekTo(0);
-      narrationPlayer.play();
-    } catch {
-      // Continue even if audio isn't available.
-    }
+    narrationPlayer.volume = 1;
+    narrationPlayer.seekTo(0);
+    narrationPlayer.play();
 
-    /*
-     * Fade Home UI away.
-     */
     Animated.parallel([
       Animated.timing(homeOpacity, {
         toValue: 0,
@@ -347,45 +291,22 @@ export default function HomeScreen() {
       }),
     ]).start();
 
-    /*
-     * IMPORTANT:
-     *
-     * Wait the entire 20 seconds.
-     * Do NOT reveal the map after 7 seconds.
-     */
-    journeyTimer.current = setTimeout(() => {
-      try {
-        narrationPlayer.pause();
-      } catch {
-        // Ignore.
-      }
+    timer.current = setTimeout(() => {
+      narrationPlayer.pause();
 
-      /*
-       * Lower the cinematic music before entering
-       * the Universe Map.
-       */
-      try {
-        musicPlayer.volume = 0.28;
-      } catch {
-        // Ignore.
-      }
+      musicPlayer.volume = 0.28;
 
-      /*
-       * Explore owns the Universe Map.
-       */
       router.replace('/explore');
     }, JOURNEY_DURATION);
   }
 
-  const movingScan =
-    scanLine.interpolate({
-      inputRange: [0, 1],
-      outputRange: [-width, width],
-    });
+  const scanPosition = scanLine.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-width, width],
+  });
 
   return (
     <View style={styles.container}>
-      {/* 3D SPACE */}
       <View style={styles.scene}>
         <Canvas
           style={{ flex: 1 }}
@@ -396,30 +317,23 @@ export default function HomeScreen() {
             far: 100,
           }}
         >
-          <CinematicCamera
-            journeyStarted={
-              phase === 'journey'
-            }
+          <SpaceCamera
+            moving={phase === 'journey'}
           />
 
           <Stars />
 
           <Earth
-            journeyStarted={
-              phase === 'journey'
-            }
+            moving={phase === 'journey'}
           />
         </Canvas>
       </View>
 
-      {/* HOME */}
       {phase === 'home' && (
         <Animated.View
           style={[
             styles.overlay,
-            {
-              opacity: homeOpacity,
-            },
+            { opacity: homeOpacity },
           ]}
         >
           <View style={styles.top}>
@@ -473,13 +387,17 @@ export default function HomeScreen() {
               EXPLORE
             </Text>
 
-            <Text style={styles.dot}>•</Text>
+            <Text style={styles.dot}>
+              •
+            </Text>
 
             <Text style={styles.bottomText}>
               DISCOVER
             </Text>
 
-            <Text style={styles.dot}>•</Text>
+            <Text style={styles.dot}>
+              •
+            </Text>
 
             <Text style={styles.bottomText}>
               UNDERSTAND
@@ -488,15 +406,12 @@ export default function HomeScreen() {
         </Animated.View>
       )}
 
-      {/* CINEMATIC JOURNEY */}
       {phase === 'journey' && (
         <Animated.View
           pointerEvents="none"
           style={[
             styles.journeyOverlay,
-            {
-              opacity: journeyOpacity,
-            },
+            { opacity: journeyOpacity },
           ]}
         >
           <View style={styles.journeyTop}>
@@ -531,7 +446,7 @@ export default function HomeScreen() {
                   {
                     transform: [
                       {
-                        translateX: movingScan,
+                        translateX: scanPosition,
                       },
                     ],
                   },

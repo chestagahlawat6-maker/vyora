@@ -20,12 +20,13 @@ type Planet = {
   distance: string;
   size: number;
   color: string;
-  x: number;
-  y: number;
   type: string;
   temperature: string;
   description: string;
   facts: string[];
+  orbitIndex: number;
+  orbitAngle: number;
+  hasRings?: boolean;
 };
 
 const planets: Planet[] = [
@@ -35,8 +36,6 @@ const planets: Planet[] = [
     distance: '57.9M KM',
     size: 17,
     color: '#81786f',
-    x: 0.15,
-    y: 0.30,
     type: 'ROCKY PLANET',
     temperature: '−180°C TO 430°C',
     description:
@@ -46,6 +45,8 @@ const planets: Planet[] = [
       'Fastest orbit around the Sun',
       'Almost no atmosphere',
     ],
+    orbitIndex: 0,
+    orbitAngle: -72,
   },
   {
     name: 'VENUS',
@@ -53,8 +54,6 @@ const planets: Planet[] = [
     distance: '108.2M KM',
     size: 25,
     color: '#c58b50',
-    x: 0.32,
-    y: 0.58,
     type: 'ROCKY PLANET',
     temperature: '≈ 465°C',
     description:
@@ -64,6 +63,8 @@ const planets: Planet[] = [
       'Covered by thick clouds',
       'Rotates very slowly',
     ],
+    orbitIndex: 1,
+    orbitAngle: -35,
   },
   {
     name: 'EARTH',
@@ -71,8 +72,6 @@ const planets: Planet[] = [
     distance: '149.6M KM',
     size: 31,
     color: '#2877ce',
-    x: 0.52,
-    y: 0.34,
     type: 'ROCKY PLANET',
     temperature: '≈ 15°C AVERAGE',
     description:
@@ -82,6 +81,8 @@ const planets: Planet[] = [
       'Has one natural satellite: the Moon',
       'Our home in the cosmos',
     ],
+    orbitIndex: 2,
+    orbitAngle: -5,
   },
   {
     name: 'MARS',
@@ -89,8 +90,6 @@ const planets: Planet[] = [
     distance: '227.9M KM',
     size: 23,
     color: '#b6543d',
-    x: 0.70,
-    y: 0.59,
     type: 'ROCKY PLANET',
     temperature: '≈ −63°C AVERAGE',
     description:
@@ -100,6 +99,8 @@ const planets: Planet[] = [
       'Has two small moons',
       'Shows evidence of ancient water',
     ],
+    orbitIndex: 3,
+    orbitAngle: 35,
   },
   {
     name: 'JUPITER',
@@ -107,8 +108,6 @@ const planets: Planet[] = [
     distance: '778.5M KM',
     size: 48,
     color: '#b77c5b',
-    x: 0.27,
-    y: 0.82,
     type: 'GAS GIANT',
     temperature: '≈ −110°C CLOUD TOPS',
     description:
@@ -118,6 +117,9 @@ const planets: Planet[] = [
       'Has the Great Red Spot',
       'Has dozens of known moons',
     ],
+    orbitIndex: 4,
+    orbitAngle: 70,
+    hasRings: true,
   },
   {
     name: 'SATURN',
@@ -125,8 +127,6 @@ const planets: Planet[] = [
     distance: '1.43B KM',
     size: 43,
     color: '#c8aa77',
-    x: 0.70,
-    y: 0.84,
     type: 'GAS GIANT',
     temperature: '≈ −140°C CLOUD TOPS',
     description:
@@ -136,18 +136,71 @@ const planets: Planet[] = [
       'Less dense than water',
       'Has many known moons',
     ],
+    orbitIndex: 5,
+    orbitAngle: 125,
+    hasRings: true,
   },
+  {
+    name: 'URANUS',
+    subtitle: 'THE ICE GIANT',
+    distance: '2.87B KM',
+    size: 34,
+    color: '#76b8c8',
+    type: 'ICE GIANT',
+    temperature: '≈ −195°C',
+    description:
+      'A pale blue ice giant rotating on its side with a faint system of rings.',
+    facts: [
+      'Rotates with an extreme axial tilt',
+      'Has a faint ring system',
+      'An ice giant rich in water, methane and ammonia',
+    ],
+    orbitIndex: 6,
+    orbitAngle: 175,
+    hasRings: true,
+  },
+  {
+    name: 'NEPTUNE',
+    subtitle: 'THE WINDY WORLD',
+    distance: '4.50B KM',
+    size: 33,
+    color: '#4169c1',
+    type: 'ICE GIANT',
+    temperature: '≈ −200°C',
+    description:
+      'The most distant major planet, famous for its deep blue color and extremely fast winds.',
+    facts: [
+      'Farthest planet from the Sun',
+      'Has the fastest planetary winds',
+      'An ice giant with a dark, dynamic atmosphere',
+    ],
+    orbitIndex: 7,
+    orbitAngle: 220,
+    hasRings: true,
+  },
+];
+
+const orbitDurations = [
+  5200,
+  7200,
+  9200,
+  11500,
+  15500,
+  19000,
+  23000,
+  27000,
 ];
 
 function StarField() {
   const stars = useMemo(
     () =>
-      Array.from({ length: 110 }, (_, i) => ({
+      Array.from({ length: 120 }, (_, i) => ({
         id: i,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.65 + 0.1,
+        left: (i * 47.731) % 100,
+        top: (i * 71.193 + 13) % 100,
+        size: 0.5 + ((i * 17) % 18) / 10,
+        opacity: Math.min(0.12 + ((i * 29) % 65) / 100, 0.78),
+        twinkle: i % 5 === 0,
       })),
     []
   );
@@ -155,21 +208,106 @@ function StarField() {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {stars.map((star) => (
-        <View
-          key={star.id}
-          style={[
-            styles.star,
-            {
-              left: `${star.left}%`,
-              top: `${star.top}%`,
-              width: star.size,
-              height: star.size,
-              opacity: star.opacity,
-            },
-          ]}
-        />
+        <TwinklingStar key={star.id} star={star} />
       ))}
     </View>
+  );
+}
+
+function TwinklingStar({
+  star,
+}: {
+  star: {
+    id: number;
+    left: number;
+    top: number;
+    size: number;
+    opacity: number;
+    twinkle: boolean;
+  };
+}) {
+  const opacity = useRef(new Animated.Value(star.opacity)).current;
+
+  useEffect(() => {
+    if (!star.twinkle) return;
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: Math.max(star.opacity * 0.35, 0.08),
+          duration: 1100 + star.id * 37,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: star.opacity,
+          duration: 1300 + star.id * 41,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    animation.start();
+
+    return () => animation.stop();
+  }, [opacity, star]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.star,
+        {
+          left: `${star.left}%`,
+          top: `${star.top}%`,
+          width: star.size,
+          height: star.size,
+          opacity,
+        },
+      ]}
+    />
+  );
+}
+
+function Sun() {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, {
+          toValue: 1.08,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    animation.start();
+
+    return () => animation.stop();
+  }, [scale]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.sunSystem, { transform: [{ scale }] }]}
+    >
+      <View style={styles.sunOuterGlow} />
+      <View style={styles.sunMiddleGlow} />
+      <View style={styles.sunInnerGlow} />
+
+      <View style={styles.sunCore}>
+        <View style={styles.sunHighlight} />
+      </View>
+    </Animated.View>
   );
 }
 
@@ -183,13 +321,13 @@ function Planet({
   selected: boolean;
 }) {
   const pulse = useRef(new Animated.Value(1)).current;
-  const selectionScale = useRef(new Animated.Value(1)).current;
+  const selectedScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
-          toValue: 1.1,
+          toValue: 1.055,
           duration: 1400 + index * 120,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
@@ -209,13 +347,18 @@ function Planet({
   }, [index, pulse]);
 
   useEffect(() => {
-    Animated.spring(selectionScale, {
+    Animated.spring(selectedScale, {
       toValue: selected ? 1.16 : 1,
       friction: 7,
       tension: 80,
       useNativeDriver: true,
     }).start();
-  }, [selected, selectionScale]);
+  }, [selected, selectedScale]);
+
+  const isJupiter = planet.name === 'JUPITER';
+  const isSaturn = planet.name === 'SATURN';
+  const isUranus = planet.name === 'URANUS';
+  const isNeptune = planet.name === 'NEPTUNE';
 
   return (
     <Animated.View
@@ -224,7 +367,7 @@ function Planet({
         {
           transform: [
             { scale: pulse },
-            { scale: selectionScale },
+            { scale: selectedScale },
           ],
         },
       ]}
@@ -235,12 +378,30 @@ function Planet({
           style={[
             styles.selectedPlanetGlow,
             {
-              width: planet.size + 22,
-              height: planet.size + 22,
-              borderRadius: (planet.size + 22) / 2,
+              width: planet.size + 24,
+              height: planet.size + 24,
+              borderRadius: (planet.size + 24) / 2,
             },
           ]}
         />
+      )}
+
+      {planet.hasRings && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.mapPlanetRing,
+            {
+              width: planet.size + (isSaturn ? 34 : 23),
+              height: planet.size * 0.42,
+              borderColor: isSaturn
+                ? 'rgba(225,205,160,0.72)'
+                : 'rgba(180,200,215,0.34)',
+            },
+          ]}
+        >
+          {isSaturn && <View style={styles.innerRing} />}
+        </View>
       )}
 
       <View
@@ -252,22 +413,252 @@ function Planet({
             borderRadius: planet.size / 2,
             backgroundColor: planet.color,
             borderColor: selected
-              ? '#9bc7ff'
-              : 'rgba(255,255,255,0.5)',
+              ? '#b5d5ff'
+              : 'rgba(255,255,255,0.42)',
+          },
+        ]}
+      >
+        <View
+          pointerEvents="none"
+          style={[
+            styles.planetShade,
+            {
+              width: planet.size * 0.82,
+              height: planet.size * 0.82,
+              borderRadius: planet.size / 2,
+            },
+          ]}
+        />
+
+        <View
+          pointerEvents="none"
+          style={[
+            styles.planetHighlight,
+            {
+              width: Math.max(planet.size * 0.25, 4),
+              height: Math.max(planet.size * 0.25, 4),
+              left: planet.size * 0.2,
+              top: planet.size * 0.17,
+              backgroundColor: isUranus
+                ? 'rgba(225,255,255,0.38)'
+                : isNeptune
+                  ? 'rgba(170,210,255,0.32)'
+                  : isJupiter
+                    ? 'rgba(255,240,210,0.30)'
+                    : 'rgba(255,255,255,0.27)',
+            },
+          ]}
+        />
+
+        {isJupiter && <View style={styles.jupiterBand} />}
+      </View>
+
+      <Text style={styles.planetName}>{planet.name}</Text>
+      <Text style={styles.planetSubtitle}>{planet.subtitle}</Text>
+    </Animated.View>
+  );
+}
+
+function Orbit({
+  radius,
+  centerX,
+  centerY,
+}: {
+  radius: number;
+  centerX: number;
+  centerY: number;
+}) {
+  const height = radius * 1.15;
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.orbit,
+        {
+          width: radius * 2,
+          height,
+          left: centerX - radius,
+          top: centerY - height / 2,
+        },
+      ]}
+    />
+  );
+}
+
+function AsteroidBelt({
+  centerX,
+  centerY,
+  innerRadius,
+  outerRadius,
+}: {
+  centerX: number;
+  centerY: number;
+  innerRadius: number;
+  outerRadius: number;
+}) {
+  const dots = useMemo(
+    () =>
+      Array.from({ length: 85 }, (_, i) => {
+        const angle =
+          (i * 137.5 + (i % 5) * 9) * (Math.PI / 180);
+
+        const distance =
+          innerRadius +
+          ((outerRadius - innerRadius) * ((i * 17) % 100)) / 100;
+
+        return {
+          id: i,
+          left: centerX + Math.cos(angle) * distance,
+          top: centerY + Math.sin(angle) * distance * 0.575,
+          size: 1 + (i % 3) * 0.55,
+          opacity: 0.16 + (i % 5) * 0.065,
+        };
+      }),
+    [centerX, centerY, innerRadius, outerRadius]
+  );
+
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {dots.map((dot) => (
+        <View
+          key={dot.id}
+          style={[
+            styles.asteroid,
+            {
+              left: dot.left,
+              top: dot.top,
+              width: dot.size,
+              height: dot.size,
+              opacity: dot.opacity,
+            },
+          ]}
+        />
+      ))}
+
+      <View
+        style={[
+          styles.asteroidOutline,
+          {
+            width: outerRadius * 2,
+            height: outerRadius * 1.15,
+            left: centerX - outerRadius,
+            top: centerY - (outerRadius * 1.15) / 2,
           },
         ]}
       />
 
-      <Text style={styles.planetName}>{planet.name}</Text>
+      <View
+        style={[
+          styles.asteroidOutline,
+          {
+            width: innerRadius * 2,
+            height: innerRadius * 1.15,
+            left: centerX - innerRadius,
+            top: centerY - (innerRadius * 1.15) / 2,
+          },
+        ]}
+      />
+    </View>
+  );
+}
 
-      <Text style={styles.planetSubtitle}>{planet.subtitle}</Text>
+function MovingPlanet({
+  planet,
+  index,
+  position,
+  radius,
+  selected,
+  onPress,
+}: {
+  planet: Planet;
+  index: number;
+  position: { left: number; top: number };
+  radius: number;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  const inputRange = useMemo(
+    () => Array.from({ length: 25 }, (_, i) => i / 24),
+    []
+  );
+
+  const angles = useMemo(
+    () =>
+      Array.from(
+        { length: 25 },
+        (_, i) => planet.orbitAngle + (360 * i) / 24
+      ),
+    [planet.orbitAngle]
+  );
+
+  const startAngle = planet.orbitAngle * (Math.PI / 180);
+
+  const translateX = progress.interpolate({
+    inputRange,
+    outputRange: angles.map(
+      (angle) =>
+        Math.cos(angle * (Math.PI / 180)) * radius -
+        Math.cos(startAngle) * radius
+    ),
+    extrapolate: 'clamp',
+  });
+
+  const translateY = progress.interpolate({
+    inputRange,
+    outputRange: angles.map(
+      (angle) =>
+        Math.sin(angle * (Math.PI / 180)) * radius * 0.575 -
+        Math.sin(startAngle) * radius * 0.575
+    ),
+    extrapolate: 'clamp',
+  });
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: orbitDurations[index],
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+
+    animation.start();
+
+    return () => animation.stop();
+  }, [index, progress]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.movingPlanet,
+        {
+          left: position.left,
+          top: position.top,
+          transform: [{ translateX }, { translateY }],
+        },
+      ]}
+    >
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Explore ${planet.name}`}
+        style={({ pressed }) => [
+          styles.planetButton,
+          pressed && styles.planetPressed,
+        ]}
+      >
+        <Planet planet={planet} index={index} selected={selected} />
+      </Pressable>
     </Animated.View>
   );
 }
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
-
   const music = useAudioPlayer(musicSource);
 
   const [selectedPlanet, setSelectedPlanet] =
@@ -275,21 +666,13 @@ export default function ExploreScreen() {
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translate = useRef(new Animated.Value(35)).current;
-
-  const briefingOpacity =
-    useRef(new Animated.Value(0)).current;
-
-  const briefingTranslate =
-    useRef(new Animated.Value(45)).current;
+  const panelOpacity = useRef(new Animated.Value(0)).current;
+  const panelTranslate = useRef(new Animated.Value(45)).current;
 
   useEffect(() => {
-    try {
-      music.volume = 0.28;
-      music.loop = true;
-      music.play();
-    } catch {
-      // Visual experience works without audio.
-    }
+    music.volume = 0.28;
+    music.loop = true;
+    music.play();
 
     Animated.parallel([
       Animated.timing(opacity, {
@@ -307,30 +690,25 @@ export default function ExploreScreen() {
     ]).start();
 
     return () => {
-      try {
-        music.pause();
-      } catch {
-        // Ignore cleanup errors.
-      }
+      music.pause();
     };
   }, [music, opacity, translate]);
 
   function openPlanet(planet: Planet) {
     setSelectedPlanet(planet);
-
-    briefingOpacity.setValue(0);
-    briefingTranslate.setValue(45);
+    panelOpacity.setValue(0);
+    panelTranslate.setValue(45);
 
     Animated.parallel([
-      Animated.timing(briefingOpacity, {
+      Animated.timing(panelOpacity, {
         toValue: 1,
-        duration: 500,
+        duration: 400,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.timing(briefingTranslate, {
+      Animated.timing(panelTranslate, {
         toValue: 0,
-        duration: 600,
+        duration: 500,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -339,15 +717,15 @@ export default function ExploreScreen() {
 
   function closePlanet() {
     Animated.parallel([
-      Animated.timing(briefingOpacity, {
+      Animated.timing(panelOpacity, {
         toValue: 0,
-        duration: 300,
+        duration: 250,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.timing(briefingTranslate, {
+      Animated.timing(panelTranslate, {
         toValue: 25,
-        duration: 300,
+        duration: 250,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -365,22 +743,47 @@ export default function ExploreScreen() {
 
     closePlanet();
 
-    /*
-     * STAGE 2
-     *
-     * Earth gets its first full exploration module.
-     * Other worlds remain on the map until their
-     * individual experiences are built.
-     */
     if (planetName === 'EARTH') {
       setTimeout(() => {
-        router.push('/earth');
-      }, 320);
+        router.push('/earth' as any);
+      }, 300);
     }
   }
 
   const mapWidth = Math.max(width - 44, 280);
-  const mapHeight = 420;
+  const mapHeight = 500;
+  const centerX = mapWidth / 2;
+  const centerY = mapHeight / 2;
+
+  const maxRadius = Math.min(mapWidth / 2 - 24, 228);
+  const minRadius = 43;
+
+  const orbitRadii = Array.from(
+    { length: 8 },
+    (_, i) =>
+      minRadius + ((maxRadius - minRadius) / 7) * i
+  );
+
+  function getPlanetPosition(planet: Planet) {
+    const radius = orbitRadii[planet.orbitIndex];
+    const angle = planet.orbitAngle * (Math.PI / 180);
+
+    return {
+      left: centerX + Math.cos(angle) * radius - 40,
+      top:
+        centerY +
+        Math.sin(angle) * radius * 0.575 -
+        30,
+    };
+  }
+
+  const asteroidInnerRadius =
+    orbitRadii[3] +
+    (orbitRadii[4] - orbitRadii[3]) * 0.18;
+
+  const asteroidOuterRadius =
+    orbitRadii[3] +
+    (orbitRadii[4] - orbitRadii[3]) * 0.82;
 
   return (
     <View style={styles.container}>
@@ -390,35 +793,26 @@ export default function ExploreScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* HEADER */}
-        <Animated.View
-          style={[
-            styles.header,
-            { opacity },
-          ]}
-        >
+        <Animated.View style={[styles.header, { opacity }]}>
           <Pressable
             onPress={() => router.replace('/')}
             style={({ pressed }) => [
               styles.backButton,
-              pressed && styles.backButtonPressed,
+              pressed && styles.pressed,
             ]}
           >
             <Text style={styles.backArrow}>←</Text>
-
             <Text style={styles.backText}>HOME</Text>
           </Pressable>
 
           <View style={styles.brand}>
             <Text style={styles.logo}>VYORA</Text>
-
             <Text style={styles.systemText}>
               EXPLORATION SYSTEM
             </Text>
           </View>
         </Animated.View>
 
-        {/* INTRO */}
         <Animated.View
           style={[
             styles.intro,
@@ -433,17 +827,14 @@ export default function ExploreScreen() {
           </Text>
 
           <Text style={styles.title}>EXPLORE THE</Text>
-
           <Text style={styles.titleAccent}>UNIVERSE.</Text>
 
           <Text style={styles.description}>
-            Six worlds mapped.
-            {'\n'}
+            Eight worlds mapped.{'\n'}
             Infinite questions waiting to be asked.
           </Text>
         </Animated.View>
 
-        {/* MAP */}
         <Animated.View
           style={[
             styles.mapSection,
@@ -466,97 +857,109 @@ export default function ExploreScreen() {
 
             <View style={styles.online}>
               <View style={styles.onlineDot} />
-
-              <Text style={styles.onlineText}>
-                ONLINE
-              </Text>
+              <Text style={styles.onlineText}>LIVE</Text>
             </View>
           </View>
 
-          <View style={styles.spaceMap}>
-            {/* ORBITS */}
-            <View
-              style={[
-                styles.orbit,
-                styles.orbitOne,
-              ]}
+          <View
+            style={[
+              styles.spaceMap,
+              { width: mapWidth, height: mapHeight },
+            ]}
+          >
+            {orbitRadii.map((radius, index) => (
+              <Orbit
+                key={index}
+                radius={radius}
+                centerX={centerX}
+                centerY={centerY}
+              />
+            ))}
+
+            <AsteroidBelt
+              centerX={centerX}
+              centerY={centerY}
+              innerRadius={asteroidInnerRadius}
+              outerRadius={asteroidOuterRadius}
             />
 
-            <View
+            <Text
               style={[
-                styles.orbit,
-                styles.orbitTwo,
+                styles.asteroidLabel,
+                {
+                  left: centerX + asteroidOuterRadius * 0.55,
+                  top: centerY - asteroidOuterRadius * 0.32,
+                },
               ]}
-            />
+            >
+              ASTEROID{'\n'}BELT
+            </Text>
 
             <View
+              pointerEvents="none"
               style={[
-                styles.orbit,
-                styles.orbitThree,
+                styles.sunContainer,
+                {
+                  left: centerX - 50,
+                  top: centerY - 50,
+                },
               ]}
-            />
-
-            <View
-              style={[
-                styles.orbit,
-                styles.orbitFour,
-              ]}
-            />
-
-            {/* SUN */}
-            <View style={styles.sunGlow}>
-              <View style={styles.sunCore} />
+            >
+              <Sun />
             </View>
 
-            <Text style={styles.sunLabel}>SOL</Text>
+            <Text
+              style={[
+                styles.sunLabel,
+                {
+                  left: centerX - 10,
+                  top: centerY + 48,
+                },
+              ]}
+            >
+              SOL
+            </Text>
 
-            {/* PLANETS */}
             {planets.map((planet, index) => (
-              <Pressable
+              <MovingPlanet
                 key={planet.name}
+                planet={planet}
+                index={index}
+                position={getPlanetPosition(planet)}
+                radius={orbitRadii[planet.orbitIndex]}
+                selected={selectedPlanet?.name === planet.name}
                 onPress={() => openPlanet(planet)}
-                accessibilityRole="button"
-                accessibilityLabel={`Explore ${planet.name}`}
-                style={({ pressed }) => [
-                  styles.planetPosition,
-                  pressed &&
-                    styles.planetPositionPressed,
-                  {
-                    left:
-                      mapWidth * planet.x -
-                      40,
-                    top:
-                      mapHeight * planet.y -
-                      30,
-                  },
-                ]}
-              >
-                <Planet
-                  planet={planet}
-                  index={index}
-                  selected={
-                    selectedPlanet?.name ===
-                    planet.name
-                  }
-                />
-              </Pressable>
+              />
             ))}
+
+            <View
+              pointerEvents="none"
+              style={[
+                styles.centerLabel,
+                {
+                  left: centerX - 52,
+                  top: centerY - 8,
+                },
+              ]}
+            >
+              <Text style={styles.centerText}>SOLAR</Text>
+              <Text style={styles.centerText}>SYSTEM</Text>
+            </View>
           </View>
 
           <View style={styles.mapFooter}>
             <Text style={styles.mapFooterText}>
-              06 DESTINATIONS MAPPED
+              08 PLANETS MAPPED
             </Text>
 
             <View style={styles.footerLine} />
 
             <Text style={styles.mapFooterText}>
-              SCALE: NOT TO SCALE
+              ORBITS: ACTIVE
             </Text>
           </View>
         </Animated.View>
 
-        {/* DESTINATIONS */}
         <Animated.View
           style={[
             styles.destinations,
@@ -582,23 +985,19 @@ export default function ExploreScreen() {
               accessibilityLabel={`Open ${planet.name} briefing`}
               style={({ pressed }) => [
                 styles.destination,
-                pressed && styles.destinationPressed,
-                selectedPlanet?.name ===
-                  planet.name &&
+                pressed && styles.pressed,
+                selectedPlanet?.name === planet.name &&
                   styles.destinationSelected,
               ]}
             >
               <Text style={styles.number}>
-                0{index + 1}
+                {String(index + 1).padStart(2, '0')}
               </Text>
 
               <View
                 style={[
                   styles.destinationPlanet,
-                  {
-                    backgroundColor:
-                      planet.color,
-                  },
+                  { backgroundColor: planet.color },
                 ]}
               />
 
@@ -629,26 +1028,19 @@ export default function ExploreScreen() {
           ))}
         </Animated.View>
 
-        {/* DEEP SPACE */}
         <Animated.View
-          style={[
-            styles.deepSpace,
-            { opacity },
-          ]}
+          style={[styles.deepSpace, { opacity }]}
         >
           <Text style={styles.deepKicker}>
             BEYOND THE SOLAR SYSTEM
           </Text>
 
           <Text style={styles.deepTitle}>
-            The universe
-            {'\n'}
-            gets stranger.
+            The universe{'\n'}gets stranger.
           </Text>
 
           <Text style={styles.deepDescription}>
-            Black holes. Neutron stars. Galaxies.
-            {'\n'}
+            Black holes. Neutron stars. Galaxies.{'\n'}
             Mysteries we are still learning to understand.
           </Text>
 
@@ -661,7 +1053,6 @@ export default function ExploreScreen() {
           </View>
         </Animated.View>
 
-        {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.footerLogo}>VYORA</Text>
 
@@ -671,18 +1062,15 @@ export default function ExploreScreen() {
         </View>
       </ScrollView>
 
-      {/* PLANET BRIEFING */}
       {selectedPlanet && (
         <Animated.View
           style={[
             styles.briefingOverlay,
-            {
-              opacity: briefingOpacity,
-            },
+            { opacity: panelOpacity },
           ]}
         >
           <Pressable
-            style={styles.briefingBackdrop}
+            style={styles.backdrop}
             onPress={closePlanet}
             accessibilityRole="button"
             accessibilityLabel="Close planet briefing"
@@ -693,23 +1081,19 @@ export default function ExploreScreen() {
               styles.briefingCard,
               {
                 transform: [
-                  {
-                    translateY:
-                      briefingTranslate,
-                  },
+                  { translateY: panelTranslate },
                 ],
               },
             ]}
           >
             <View style={styles.briefingTop}>
-              <View>
+              <View style={styles.briefingTitleArea}>
                 <Text style={styles.briefingKicker}>
                   DESTINATION{' '}
                   {String(
                     planets.findIndex(
                       (planet) =>
-                        planet.name ===
-                        selectedPlanet.name
+                        planet.name === selectedPlanet.name
                     ) + 1
                   ).padStart(2, '0')}
                 </Text>
@@ -727,11 +1111,8 @@ export default function ExploreScreen() {
                 onPress={closePlanet}
                 style={({ pressed }) => [
                   styles.closeButton,
-                  pressed &&
-                    styles.closeButtonPressed,
+                  pressed && styles.pressed,
                 ]}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
               >
                 <Text style={styles.closeText}>×</Text>
               </Pressable>
@@ -740,7 +1121,7 @@ export default function ExploreScreen() {
             <View style={styles.briefingPlanetArea}>
               <View
                 style={[
-                  styles.briefingPlanetGlow,
+                  styles.briefingGlow,
                   {
                     backgroundColor:
                       selectedPlanet.color,
@@ -756,19 +1137,18 @@ export default function ExploreScreen() {
                       selectedPlanet.color,
                   },
                 ]}
-              />
+              >
+                <View style={styles.briefingHighlight} />
+              </View>
 
               <View style={styles.planetOrbitRing} />
             </View>
 
-            <View style={styles.briefingDivider} />
+            <View style={styles.divider} />
 
             <View style={styles.briefingMeta}>
               <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>
-                  TYPE
-                </Text>
-
+                <Text style={styles.metaLabel}>TYPE</Text>
                 <Text style={styles.metaValue}>
                   {selectedPlanet.type}
                 </Text>
@@ -778,17 +1158,13 @@ export default function ExploreScreen() {
                 <Text style={styles.metaLabel}>
                   DISTANCE
                 </Text>
-
                 <Text style={styles.metaValue}>
                   {selectedPlanet.distance}
                 </Text>
               </View>
 
               <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>
-                  TEMP
-                </Text>
-
+                <Text style={styles.metaLabel}>TEMP</Text>
                 <Text style={styles.metaValue}>
                   {selectedPlanet.temperature}
                 </Text>
@@ -800,30 +1176,24 @@ export default function ExploreScreen() {
             </Text>
 
             <View style={styles.factList}>
-              {selectedPlanet.facts.map(
-                (fact, index) => (
-                  <View
-                    key={fact}
-                    style={styles.factRow}
-                  >
-                    <Text style={styles.factNumber}>
-                      0{index + 1}
-                    </Text>
+              {selectedPlanet.facts.map((fact, index) => (
+                <View key={fact} style={styles.factRow}>
+                  <Text style={styles.factNumber}>
+                    {String(index + 1).padStart(2, '0')}
+                  </Text>
 
-                    <Text style={styles.factText}>
-                      {fact}
-                    </Text>
-                  </View>
-                )
-              )}
+                  <Text style={styles.factText}>
+                    {fact}
+                  </Text>
+                </View>
+              ))}
             </View>
 
             <Pressable
               onPress={exploreWorld}
               style={({ pressed }) => [
                 styles.exploreButton,
-                pressed &&
-                  styles.exploreButtonPressed,
+                pressed && styles.explorePressed,
               ]}
               accessibilityRole="button"
               accessibilityLabel={`Explore ${selectedPlanet.name}`}
@@ -865,7 +1235,7 @@ const styles = StyleSheet.create({
 
   star: {
     position: 'absolute',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 10,
   },
 
@@ -882,12 +1252,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
 
-  backButtonPressed: {
+  pressed: {
     opacity: 0.55,
   },
 
   backArrow: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 20,
     marginRight: 8,
   },
@@ -904,7 +1274,7 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: 7,
@@ -931,7 +1301,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 31,
     fontWeight: '900',
     letterSpacing: 3,
@@ -970,7 +1340,7 @@ const styles = StyleSheet.create({
   },
 
   mapTitle: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 2,
@@ -1002,66 +1372,82 @@ const styles = StyleSheet.create({
   },
 
   spaceMap: {
-    height: 420,
     borderWidth: 1,
     borderColor: '#10263c',
     backgroundColor: 'rgba(255,255,255,0.015)',
     overflow: 'hidden',
     position: 'relative',
+    alignSelf: 'center',
   },
 
   orbit: {
     position: 'absolute',
-    left: '50%',
-    top: 180,
     borderWidth: 1,
     borderColor: '#122d46',
     borderRadius: 999,
   },
 
-  orbitOne: {
-    width: 110,
-    height: 70,
-    marginLeft: -55,
-    marginTop: -35,
-    transform: [{ rotate: '-10deg' }],
-  },
-
-  orbitTwo: {
-    width: 190,
-    height: 130,
-    marginLeft: -95,
-    marginTop: -65,
-    transform: [{ rotate: '8deg' }],
-  },
-
-  orbitThree: {
-    width: 290,
-    height: 210,
-    marginLeft: -145,
-    marginTop: -105,
-    transform: [{ rotate: '-12deg' }],
-  },
-
-  orbitFour: {
-    width: 390,
-    height: 300,
-    marginLeft: -195,
-    marginTop: -150,
-    transform: [{ rotate: '10deg' }],
-  },
-
-  sunGlow: {
+  asteroid: {
     position: 'absolute',
-    left: '50%',
-    top: 160,
-    marginLeft: -38,
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: 'rgba(245,166,35,0.09)',
+    backgroundColor: '#8b7b65',
+    borderRadius: 999,
+  },
+
+  asteroidOutline: {
+    position: 'absolute',
+    borderWidth: 1,
+    borderColor: 'rgba(126,105,77,0.12)',
+    borderRadius: 999,
+  },
+
+  asteroidLabel: {
+    position: 'absolute',
+    color: '#5e5447',
+    fontSize: 5,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    lineHeight: 8,
+  },
+
+  sunContainer: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  sunSystem: {
+    width: 100,
+    height: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  sunOuterGlow: {
+    position: 'absolute',
+    width: 98,
+    height: 98,
+    borderRadius: 49,
+    backgroundColor: 'rgba(245,166,35,0.045)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,166,35,0.06)',
+  },
+
+  sunMiddleGlow: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(245,166,35,0.10)',
+  },
+
+  sunInnerGlow: {
+    position: 'absolute',
+    width: 55,
+    height: 55,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,190,55,0.13)',
   },
 
   sunCore: {
@@ -1069,41 +1455,112 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     backgroundColor: '#f5a623',
+    borderWidth: 1,
+    borderColor: '#ffd36b',
+    shadowColor: '#f5a623',
+    shadowOpacity: 0.55,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+
+  sunHighlight: {
+    width: 12,
+    height: 9,
+    borderRadius: 8,
+    marginLeft: 7,
+    marginTop: 6,
+    backgroundColor: 'rgba(255,240,180,0.42)',
   },
 
   sunLabel: {
     position: 'absolute',
-    left: '50%',
-    top: 244,
-    marginLeft: -10,
     color: '#c79d55',
     fontSize: 7,
     fontWeight: '900',
     letterSpacing: 2,
   },
 
-  planetPosition: {
+  centerLabel: {
     position: 'absolute',
-    width: 80,
     alignItems: 'center',
+    opacity: 0.22,
   },
 
-  planetPositionPressed: {
-    opacity: 0.72,
+  centerText: {
+    color: '#d6e5f8',
+    fontSize: 4.5,
+    fontWeight: '900',
+    letterSpacing: 1.4,
+  },
+
+  movingPlanet: {
+    position: 'absolute',
+    width: 80,
+    height: 70,
+  },
+
+  planetButton: {
+    width: 80,
+    alignItems: 'center',
   },
 
   planetNode: {
-    alignItems: 'center',
     width: 80,
+    alignItems: 'center',
+    position: 'relative',
   },
 
   planet: {
     borderWidth: 1,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+
+  planetShade: {
+    position: 'absolute',
+    right: -8,
+    bottom: -8,
+    backgroundColor: 'rgba(0,0,0,0.17)',
+  },
+
+  planetHighlight: {
+    position: 'absolute',
+  },
+
+  jupiterBand: {
+    position: 'absolute',
+    width: '76%',
+    height: 2,
+    left: '12%',
+    top: '58%',
+    backgroundColor: 'rgba(105,58,38,0.25)',
+  },
+
+  mapPlanetRing: {
+    position: 'absolute',
+    top: '28%',
+    left: '50%',
+    marginLeft: -12,
+    borderWidth: 1,
+    borderRadius: 999,
+    transform: [{ rotate: '-15deg' }],
+    zIndex: 1,
+  },
+
+  innerRing: {
+    position: 'absolute',
+    left: 5,
+    right: 5,
+    top: 4,
+    bottom: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(240,220,180,0.34)',
+    borderRadius: 999,
   },
 
   selectedPlanetGlow: {
     position: 'absolute',
-    top: -11,
+    top: -12,
     backgroundColor: 'rgba(92,166,255,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(115,171,255,0.35)',
@@ -1115,6 +1572,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 1.5,
     marginTop: 6,
+    textAlign: 'center',
   },
 
   planetSubtitle: {
@@ -1157,7 +1615,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 24,
     fontWeight: '800',
     marginTop: 5,
@@ -1171,10 +1629,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 13,
-  },
-
-  destinationPressed: {
-    opacity: 0.55,
   },
 
   destinationSelected: {
@@ -1200,7 +1654,7 @@ const styles = StyleSheet.create({
   },
 
   destinationName: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.5,
@@ -1252,7 +1706,7 @@ const styles = StyleSheet.create({
   },
 
   deepTitle: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 28,
     lineHeight: 30,
     fontWeight: '800',
@@ -1305,16 +1759,22 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
 
-  /* PLANET BRIEFING */
-
   briefingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     zIndex: 50,
     justifyContent: 'flex-end',
   },
 
-  briefingBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     backgroundColor: 'rgba(0,2,8,0.78)',
   },
 
@@ -1326,7 +1786,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 28,
     maxHeight: '88%',
-    shadowColor: '#000000',
+    shadowColor: '#000',
     shadowOpacity: 0.55,
     shadowRadius: 30,
     elevation: 20,
@@ -1338,6 +1798,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
 
+  briefingTitleArea: {
+    flex: 1,
+  },
+
   briefingKicker: {
     color: '#5f91c9',
     fontSize: 7,
@@ -1347,7 +1811,7 @@ const styles = StyleSheet.create({
   },
 
   briefingName: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: 3,
@@ -1371,10 +1835,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  closeButtonPressed: {
-    opacity: 0.5,
-  },
-
   closeText: {
     color: '#9ab1c9',
     fontSize: 25,
@@ -1390,7 +1850,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 
-  briefingPlanetGlow: {
+  briefingGlow: {
     position: 'absolute',
     width: 105,
     height: 105,
@@ -1408,6 +1868,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 10,
+    overflow: 'hidden',
+  },
+
+  briefingHighlight: {
+    width: 20,
+    height: 15,
+    borderRadius: 12,
+    marginLeft: 12,
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
 
   planetOrbitRing: {
@@ -1420,7 +1890,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-12deg' }],
   },
 
-  briefingDivider: {
+  divider: {
     height: 1,
     backgroundColor: '#132a42',
     marginBottom: 14,
@@ -1499,20 +1969,20 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 
-  exploreButtonPressed: {
+  explorePressed: {
     opacity: 0.72,
     transform: [{ scale: 0.985 }],
   },
 
   exploreButtonText: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 2,
   },
 
   exploreButtonArrow: {
-    color: '#ffffff',
+    color: '#fff',
     fontSize: 19,
     marginLeft: 12,
   },
